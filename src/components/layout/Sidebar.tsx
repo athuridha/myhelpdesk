@@ -16,7 +16,6 @@ import {
   ShieldCheck,
   Globe,
   PanelLeftClose,
-  PanelLeftOpen,
 } from 'lucide-react'
 
 interface AppSettingResponse {
@@ -64,19 +63,14 @@ export function Sidebar() {
     >
       <div>
         {/* Brand Header */}
-        <div
-          className={cn(
-            'h-16 flex items-center border-b border-slate-100/80 transition-all px-3.5',
-            isSidebarOpen ? 'justify-between' : 'justify-center'
-          )}
-        >
-          {isSidebarOpen ? (
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-slate-950 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-                <Headphones className="w-3.5 h-3.5" />
-              </div>
+        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-100/80">
+          <div className={cn('flex items-center gap-2.5 min-w-0', !isSidebarOpen && 'mx-auto')}>
+            <div className="w-8 h-8 rounded-xl bg-slate-950 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+              <Headphones className="w-4 h-4" />
+            </div>
+            {isSidebarOpen && (
               <div className="min-w-0">
-                <h1 className="font-heading font-bold text-slate-900 text-sm tracking-tight leading-none flex items-center gap-1 truncate">
+                <h1 className="font-heading font-bold text-slate-900 text-sm tracking-tight leading-none flex items-center gap-1.5 truncate">
                   <span className="truncate">{appName}</span>
                   <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">
                     v1.0
@@ -84,29 +78,23 @@ export function Sidebar() {
                 </h1>
                 <p className="text-[10px] text-slate-400 mt-0.5 truncate">Multi-Dept Desk</p>
               </div>
-            </div>
-          ) : (
-            <div className="w-7 h-7 rounded-lg bg-slate-950 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-              <Headphones className="w-3.5 h-3.5" />
-            </div>
-          )}
-
-          {/* Toggle Sidebar Button */}
-          <button
-            onClick={toggleSidebar}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors shrink-0"
-            title={isSidebarOpen ? 'Sembunyikan Sidebar' : 'Tampilkan Sidebar'}
-          >
-            {isSidebarOpen ? (
-              <PanelLeftClose className="w-4 h-4" />
-            ) : (
-              <PanelLeftOpen className="w-4 h-4" />
             )}
-          </button>
+          </div>
+
+          {/* Toggle Button (Only displayed when sidebar is open) */}
+          {isSidebarOpen && (
+            <button
+              onClick={toggleSidebar}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors shrink-0"
+              title="Sembunyikan Sidebar"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* Navigation Menu */}
-        <div className="p-2.5 space-y-4">
+        <div className="p-3 space-y-4">
           {/* Main Category */}
           <div>
             {isSidebarOpen ? (
@@ -114,7 +102,7 @@ export function Sidebar() {
                 Navigasi Utama
               </p>
             ) : (
-              <div className="h-px bg-slate-100 my-2" />
+              <div className="h-px bg-slate-100 my-2 mx-1" />
             )}
             <nav className="space-y-1">
               <NavLink
@@ -122,11 +110,11 @@ export function Sidebar() {
                 title="Daftar Tiket"
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all',
-                    isSidebarOpen ? 'justify-start' : 'justify-center px-0',
+                    'flex items-center gap-2.5 rounded-xl text-xs font-medium transition-all',
+                    isSidebarOpen ? 'px-3 py-2 justify-start' : 'w-10 h-10 mx-auto justify-center',
                     isActive
                       ? 'bg-slate-900 text-white font-semibold shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/70'
                   )
                 }
               >
@@ -139,11 +127,11 @@ export function Sidebar() {
                 title="Buat Tiket Baru"
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all',
-                    isSidebarOpen ? 'justify-start' : 'justify-center px-0',
+                    'flex items-center gap-2.5 rounded-xl text-xs font-medium transition-all',
+                    isSidebarOpen ? 'px-3 py-2 justify-start' : 'w-10 h-10 mx-auto justify-center',
                     isActive
                       ? 'bg-slate-900 text-white font-semibold shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/70'
                   )
                 }
               >
@@ -157,11 +145,11 @@ export function Sidebar() {
                   title="Dashboard & SLA"
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all',
-                      isSidebarOpen ? 'justify-start' : 'justify-center px-0',
+                      'flex items-center gap-2.5 rounded-xl text-xs font-medium transition-all',
+                      isSidebarOpen ? 'px-3 py-2 justify-start' : 'w-10 h-10 mx-auto justify-center',
                       isActive
                         ? 'bg-slate-900 text-white font-semibold shadow-xs'
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/70'
                     )
                   }
                 >
@@ -181,7 +169,7 @@ export function Sidebar() {
                   <span>Pengaturan Admin</span>
                 </p>
               ) : (
-                <div className="h-px bg-slate-100 my-2" />
+                <div className="h-px bg-slate-100 my-2 mx-1" />
               )}
               <nav className="space-y-1">
                 <NavLink
@@ -190,12 +178,12 @@ export function Sidebar() {
                   className={
                     location.pathname === '/admin' && currentTab === 'users'
                       ? cn(
-                          'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-xs transition-all',
-                          !isSidebarOpen && 'justify-center px-0'
+                          'flex items-center gap-2.5 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-xs transition-all',
+                          isSidebarOpen ? 'px-3 py-2 justify-start' : 'w-10 h-10 mx-auto justify-center'
                         )
                       : cn(
-                          'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all',
-                          !isSidebarOpen && 'justify-center px-0'
+                          'flex items-center gap-2.5 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/70 transition-all',
+                          isSidebarOpen ? 'px-3 py-2 justify-start' : 'w-10 h-10 mx-auto justify-center'
                         )
                   }
                 >
@@ -211,12 +199,12 @@ export function Sidebar() {
                       className={
                         location.pathname === '/admin' && currentTab === 'divisions'
                           ? cn(
-                              'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-xs transition-all',
-                              !isSidebarOpen && 'justify-center px-0'
+                              'flex items-center gap-2.5 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-xs transition-all',
+                              isSidebarOpen ? 'px-3 py-2 justify-start' : 'w-10 h-10 mx-auto justify-center'
                             )
                           : cn(
-                              'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all',
-                              !isSidebarOpen && 'justify-center px-0'
+                              'flex items-center gap-2.5 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/70 transition-all',
+                              isSidebarOpen ? 'px-3 py-2 justify-start' : 'w-10 h-10 mx-auto justify-center'
                             )
                       }
                     >
@@ -230,12 +218,12 @@ export function Sidebar() {
                       className={
                         location.pathname === '/admin' && currentTab === 'branding'
                           ? cn(
-                              'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-xs transition-all',
-                              !isSidebarOpen && 'justify-center px-0'
+                              'flex items-center gap-2.5 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-xs transition-all',
+                              isSidebarOpen ? 'px-3 py-2 justify-start' : 'w-10 h-10 mx-auto justify-center'
                             )
                           : cn(
-                              'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all',
-                              !isSidebarOpen && 'justify-center px-0'
+                              'flex items-center gap-2.5 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/70 transition-all',
+                              isSidebarOpen ? 'px-3 py-2 justify-start' : 'w-10 h-10 mx-auto justify-center'
                             )
                       }
                     >
@@ -251,12 +239,12 @@ export function Sidebar() {
                   className={
                     location.pathname === '/admin' && currentTab === 'categories'
                       ? cn(
-                          'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-xs transition-all',
-                          !isSidebarOpen && 'justify-center px-0'
+                          'flex items-center gap-2.5 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-xs transition-all',
+                          isSidebarOpen ? 'px-3 py-2 justify-start' : 'w-10 h-10 mx-auto justify-center'
                         )
                       : cn(
-                          'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all',
-                          !isSidebarOpen && 'justify-center px-0'
+                          'flex items-center gap-2.5 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/70 transition-all',
+                          isSidebarOpen ? 'px-3 py-2 justify-start' : 'w-10 h-10 mx-auto justify-center'
                         )
                   }
                 >
@@ -283,11 +271,11 @@ export function Sidebar() {
       </div>
 
       {/* User Profile Footer */}
-      <div className="p-2.5 border-t border-slate-100 bg-slate-50/50">
+      <div className="p-3 border-t border-slate-100 bg-slate-50/50">
         <div className={cn('flex items-center gap-2', isSidebarOpen ? 'justify-between' : 'justify-center')}>
           <div className="flex items-center gap-2 min-w-0">
             <div
-              className="w-7 h-7 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs"
+              className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs"
               title={user?.name}
             >
               {user?.name?.[0]?.toUpperCase() || 'U'}
@@ -304,7 +292,7 @@ export function Sidebar() {
           {isSidebarOpen && (
             <button
               onClick={() => logout.mutate()}
-              className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
               title="Log Out"
             >
               <LogOut className="w-4 h-4" />
