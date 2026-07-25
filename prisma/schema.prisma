@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Division {
+  id          String     @id @default(cuid())
+  name        String
+  code        String     @unique
+  accountMode String     @default("INDIVIDUAL")
+  createdAt   DateTime   @default(now())
+  users       User[]
+  categories  Category[]
+  tickets     Ticket[]
+}
+
+model User {
+  id               String              @id @default(cuid())
+  name             String
+  email            String              @unique
+  passwordHash     String
+  role             String
+  divisionId       String?
+  isSharedAccount  Boolean             @default(false)
+  isActive         Boolean             @default(true)
+  createdAt        DateTime            @default(now())
+  division         Division?           @relation(fields: [divisionId], references: [id])
+  requestedTickets Ticket[]            @relation("requester")
+  assignedTickets  Ticket[]            @relation("assignee")
+  comments         TicketComment[]
+  activityLogs     TicketActivityLog[]
+  notifications    Notification[]
+  attachments      TicketAttachment[]
+}
+
+model Category {
+  id               String      @id @default(cuid())
+  name             String
+  divisionId       String
+  slaCriticalHours Int         @default(4)
+  slaHighHours     Int         @default(8)
+  slaMediumHours   Int         @default(24)
+  slaLowHours      Int         @default(72)
+  isActive         Boolean     @default(true)
+  division         Division    @relation(fields: [divisionId], references: [id])
+  formFields       FormField[]
+  tickets          Ticket[]
+}
+
+model FormField {
+  id          String             @id @default(cuid())
+  categoryId  String
+  label       String
+  fieldType   String
+  options     Json?
+  isRequired  Boolean            @default(false)
+  order       Int
+  category    Category           @relation(fields: [categoryId], references: [id])
+  fieldValues TicketFieldValue[]
+}
+
+model Ticket {
+  id            String              @id @default(cuid())
+  ticketNumber  String              @unique
+  subject       String
+  categoryId    String
+  divisionId    String
+  requesterId   String
+  assigneeId    String?
+  priority      String              @default("MEDIUM")
+  status        String              @default("BARU")
+  channel       String              @default("WEB")
+  dueDate       DateTime?
+  resolvedAt    DateTime?
+  closedAt      DateTime?
+  createdAt     DateTime            @default(now())
+  category      Category            @relation(fields: [categoryId], references: [id])
+  division      Division            @relation(fields: [divisionId], references: [id])
+  requester     User                @relation("requester", fields: [requesterId], references: [id])
+  assignee      User?               @relation("assignee", fields: [assigneeId], references: [id])
+  fieldValues   TicketFieldValue[]
+  comments      TicketComment[]
+  attachments   TicketAttachment[]
+  activityLogs  TicketActivityLog[]
+  notifications Notification[]
+}
+
+model TicketFieldValue {
+  id          String    @id @default(cuid())
+  ticketId    String
+  formFieldId String
+  value       String
+  ticket      Ticket    @relation(fields: [ticketId], references: [id])
+  formField   FormField @relation(fields: [formFieldId], references: [id])
+}
+
+model TicketComment {
+  id             String             @id @default(cuid())
+  ticketId       String
+  authorId       String
+  content        String
+  isInternalNote Boolean            @default(false)
+  createdAt      DateTime           @default(now())
+  ticket         Ticket             @relation(fields: [ticketId], references: [id])
+  author         User               @relation(fields: [authorId], references: [id])
+  attachments    TicketAttachment[]
+}
+
+model TicketAttachment {
+  id           String         @id @default(cuid())
+  ticketId     String
+  commentId    String?
+  fileUrl      String
+  fileName     String
+  uploadedById String
+  ticket       Ticket         @relation(fields: [ticketId], references: [id])
+  comment      TicketComment? @relation(fields: [commentId], references: [id])
+  uploadedBy   User           @relation(fields: [uploadedById], references: [id])
+}
+
+model TicketActivityLog {
+  id        String   @id @default(cuid())
+  ticketId  String
+  actorId   String
+  action    String
+  fromValue String?
+  toValue   String?
+  createdAt DateTime @default(now())
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  actor     User     @relation(fields: [actorId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  ticketId  String?
+  type      String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  ticket    Ticket?  @relation(fields: [ticketId], references: [id])
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
