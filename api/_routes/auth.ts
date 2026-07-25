@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import bcrypt from 'bcryptjs'
-import { prisma } from '../_lib/prisma'
-import { signToken, requireAuth } from '../_lib/auth'
+import { prisma } from '../_lib/prisma.js'
+import { signToken, requireAuth, JwtPayload } from '../_lib/auth.js'
 import { z } from 'zod'
 
 const auth = new Hono()
@@ -58,7 +58,7 @@ auth.post('/logout', (c) => {
 })
 
 auth.get('/me', requireAuth(), async (c) => {
-  const payload = c.get('user')
+  const payload = c.get('user') as JwtPayload
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
     select: {
@@ -83,7 +83,7 @@ auth.get('/me', requireAuth(), async (c) => {
 const switchSchema = z.object({ targetUserId: z.string() })
 
 auth.post('/switch-user', requireAuth(), async (c) => {
-  const payload = c.get('user')
+  const payload = c.get('user') as JwtPayload
   const actor = await prisma.user.findUnique({ where: { id: payload.userId } })
   if (!actor) return c.json({ error: 'User not found' }, 404)
 

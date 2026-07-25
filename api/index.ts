@@ -1,14 +1,14 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { z } from 'zod'
-import auth from './_routes/auth'
-import divisions from './_routes/divisions'
-import categories from './_routes/categories'
-import formFields from './_routes/form-fields'
-import tickets from './_routes/tickets'
-import notifications from './_routes/notifications'
-import users from './_routes/users'
-import settings from './_routes/settings'
+import auth from './_routes/auth.js'
+import divisions from './_routes/divisions.js'
+import categories from './_routes/categories.js'
+import formFields from './_routes/form-fields.js'
+import tickets from './_routes/tickets.js'
+import notifications from './_routes/notifications.js'
+import users from './_routes/users.js'
+import settings from './_routes/settings.js'
 
 export const config = { runtime: 'nodejs' }
 
