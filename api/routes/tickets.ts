@@ -57,8 +57,9 @@ tickets.get('/', requireAuth(), async (c) => {
 
 tickets.get('/:id', requireAuth(), async (c) => {
   const { userId, role, divisionId } = c.get('user')
+  const ticketId = c.req.param('id') as string
   const ticket = await prisma.ticket.findUnique({
-    where: { id: c.req.param('id') },
+    where: { id: ticketId },
     include: {
       requester: { select: { id: true, name: true, email: true } },
       assignee: { select: { id: true, name: true, email: true } },
@@ -166,7 +167,7 @@ tickets.patch('/:id', requireAuth(), async (c) => {
   if (role === 'requester') return c.json({ error: 'Forbidden' }, 403)
 
   const body = patchSchema.parse(await c.req.json())
-  const id = c.req.param('id')
+  const id = c.req.param('id') as string
 
   const existing = await prisma.ticket.findUnique({ where: { id } })
   if (!existing) return c.json({ error: 'Ticket tidak ditemukan' }, 404)
@@ -214,11 +215,12 @@ const commentSchema = z.object({ content: z.string().min(1), isInternalNote: z.b
 
 tickets.post('/:id/comments', requireAuth(), async (c) => {
   const { userId, role } = c.get('user')
+  const ticketId = c.req.param('id') as string
   const body = commentSchema.parse(await c.req.json())
   if (body.isInternalNote && role === 'requester') return c.json({ error: 'Forbidden' }, 403)
 
   const comment = await prisma.ticketComment.create({
-    data: { ticketId: c.req.param('id'), authorId: userId, ...body },
+    data: { ticketId, authorId: userId, ...body },
     include: { author: { select: { id: true, name: true, role: true } } },
   })
   return c.json(comment, 201)
@@ -232,7 +234,7 @@ const attachmentSchema = z.object({
 
 tickets.post('/:id/attachments', requireAuth(), async (c) => {
   const { userId } = c.get('user')
-  const ticketId = c.req.param('id')
+  const ticketId = c.req.param('id') as string
   const body = attachmentSchema.parse(await c.req.json())
 
   let publicUrl = body.fileUrl

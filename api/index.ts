@@ -28,7 +28,7 @@ app.use(
 // Global Error Handler
 app.onError((err, c) => {
   if (err instanceof z.ZodError) {
-    return c.json({ error: 'Validation error', details: err.errors }, 400)
+    return c.json({ error: 'Validation error', details: err.issues }, 400)
   }
   console.error('API Error:', err)
   return c.json(
