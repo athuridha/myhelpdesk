@@ -15,7 +15,7 @@ auth.post('/login', async (c) => {
   const body = await c.req.json()
   const parsed = loginSchema.safeParse(body)
   if (!parsed.success) {
-    return c.json({ error: 'Invalid input', details: parsed.error.errors }, 400)
+    return c.json({ error: 'Invalid input', details: parsed.error.issues }, 400)
   }
 
   const user = await prisma.user.findUnique({

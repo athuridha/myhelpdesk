@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "prisma generate && tsc -b && vite build",
+    "postinstall": "prisma generate",
     "lint": "oxlint",
     "preview": "vite preview",
     "db:seed": "prisma db seed",
