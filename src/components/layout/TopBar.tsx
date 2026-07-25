@@ -14,7 +14,6 @@ import {
   Check,
   Undo2,
   ShieldCheck,
-  PanelLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -28,7 +27,7 @@ interface UserOption {
 }
 
 export function TopBar({ title }: { title: string }) {
-  const { viewMode, setViewMode, isSidebarOpen, toggleSidebar } = useUiStore()
+  const { viewMode, setViewMode } = useUiStore()
   const { user, switchUser } = useAuth()
   const { items, unreadCount, markAllRead, markRead } = useNotifications()
   const [showNotifications, setShowNotifications] = useState(false)
@@ -68,20 +67,10 @@ export function TopBar({ title }: { title: string }) {
 
   return (
     <header className="h-16 border-b border-slate-200/80 bg-white flex items-center justify-between px-4 md:px-6 gap-4 sticky top-0 z-30 shadow-xs">
-      {/* Sidebar Toggle & Title */}
-      <div className="flex items-center gap-2.5 min-w-0">
-        <button
-          onClick={toggleSidebar}
-          className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors shrink-0"
-          title={isSidebarOpen ? 'Sembunyikan Sidebar' : 'Tampilkan Sidebar'}
-        >
-          <PanelLeft className="w-4 h-4" />
-        </button>
-
-        <h2 className="text-sm md:text-base font-heading font-bold text-slate-900 tracking-tight truncate">
-          {title}
-        </h2>
-      </div>
+      {/* Title */}
+      <h2 className="text-sm md:text-base font-heading font-bold text-slate-900 tracking-tight truncate">
+        {title}
+      </h2>
 
       {/* Action Controls */}
       <div className="flex items-center gap-2 md:gap-3">

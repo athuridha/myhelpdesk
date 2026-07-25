@@ -64,11 +64,11 @@ export function Sidebar() {
       <div>
         {/* Brand Header */}
         <div className="h-16 px-4 flex items-center justify-between border-b border-slate-100/80">
-          <div className={cn('flex items-center gap-2.5 min-w-0', !isSidebarOpen && 'mx-auto')}>
-            <div className="w-8 h-8 rounded-xl bg-slate-950 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-              <Headphones className="w-4 h-4" />
-            </div>
-            {isSidebarOpen && (
+          {isSidebarOpen ? (
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-slate-950 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                <Headphones className="w-4 h-4" />
+              </div>
               <div className="min-w-0">
                 <h1 className="font-heading font-bold text-slate-900 text-sm tracking-tight leading-none flex items-center gap-1.5 truncate">
                   <span className="truncate">{appName}</span>
@@ -78,10 +78,18 @@ export function Sidebar() {
                 </h1>
                 <p className="text-[10px] text-slate-400 mt-0.5 truncate">Multi-Dept Desk</p>
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <button
+              onClick={toggleSidebar}
+              className="w-9 h-9 mx-auto rounded-xl bg-slate-950 hover:bg-slate-800 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs transition-all active:scale-95"
+              title="Tampilkan Sidebar Full"
+            >
+              <Headphones className="w-4 h-4" />
+            </button>
+          )}
 
-          {/* Toggle Button (Only displayed when sidebar is open) */}
+          {/* Single Toggle Button (Only when open) */}
           {isSidebarOpen && (
             <button
               onClick={toggleSidebar}
