@@ -1,16 +1,16 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { z } from 'zod'
-import auth from './routes/auth'
-import divisions from './routes/divisions'
-import categories from './routes/categories'
-import formFields from './routes/form-fields'
-import tickets from './routes/tickets'
-import notifications from './routes/notifications'
-import users from './routes/users'
-import settings from './routes/settings'
+import auth from './routes/auth.js'
+import divisions from './routes/divisions.js'
+import categories from './routes/categories.js'
+import formFields from './routes/form-fields.js'
+import tickets from './routes/tickets.js'
+import notifications from './routes/notifications.js'
+import users from './routes/users.js'
+import settings from './routes/settings.js'
 
-export const config = { runtime: 'nodejs20.x' }
+export const config = { runtime: 'nodejs' }
 
 const app = new Hono().basePath('/api')
 

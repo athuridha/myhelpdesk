@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
-import { prisma } from '../lib/prisma'
-import { requireAuth } from '../lib/auth'
-import { calculateDueDate } from '../lib/sla'
+import { prisma } from '../lib/prisma.js'
+import { requireAuth } from '../lib/auth.js'
+import { calculateDueDate } from '../lib/sla.js'
 import { z } from 'zod'
 import { put } from '@vercel/blob'
 

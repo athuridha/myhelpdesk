@@ -1,58 +1,53 @@
 import { Hono } from 'hono'
-import { prisma } from '../lib/prisma'
-import { requireAuth } from '../lib/auth'
+import { prisma } from '../lib/prisma.js'
+import { requireAuth } from '../lib/auth.js'
 import { z } from 'zod'
 
 const categories = new Hono()
 
 categories.get('/', requireAuth(), async (c) => {
   const { divisionId: qDiv } = c.req.query()
-  const where: Record<string, unknown> = { isActive: true }
-  if (qDiv) {
-    where.divisionId = qDiv
-  }
+  const where = qDiv ? { divisionId: qDiv } : {}
   return c.json(
     await prisma.category.findMany({
       where,
       orderBy: { name: 'asc' },
-      include: {
-        division: { select: { id: true, name: true, code: true } },
-        formFields: { orderBy: { order: 'asc' } },
-      },
+      include: { division: { select: { id: true, name: true, code: true } } },
     })
   )
-})
-
-categories.get('/:id/form-schema', requireAuth(), async (c) => {
-  const fields = await prisma.formField.findMany({
-    where: { categoryId: c.req.param('id') },
-    orderBy: { order: 'asc' },
-  })
-  return c.json(fields)
 })
 
 const catSchema = z.object({
   name: z.string().min(1),
   divisionId: z.string(),
-  slaCriticalHours: z.number().int().positive().default(4),
-  slaHighHours: z.number().int().positive().default(8),
-  slaMediumHours: z.number().int().positive().default(24),
-  slaLowHours: z.number().int().positive().default(72),
-  isActive: z.boolean().optional(),
+  slaCriticalHours: z.number().optional(),
+  slaHighHours: z.number().optional(),
+  slaMediumHours: z.number().optional(),
+  slaLowHours: z.number().optional(),
 })
 
 categories.post('/', requireAuth('super_admin', 'division_admin'), async (c) => {
-  const { role, divisionId } = c.get('user')
+  const { role: actorRole, divisionId: actorDiv } = c.get('user')
   const body = catSchema.parse(await c.req.json())
-  if (role === 'division_admin' && body.divisionId !== divisionId) {
+
+  if (actorRole === 'division_admin' && body.divisionId !== actorDiv) {
     return c.json({ error: 'Forbidden' }, 403)
   }
+
   return c.json(await prisma.category.create({ data: body }), 201)
 })
 
 categories.patch('/:id', requireAuth('super_admin', 'division_admin'), async (c) => {
+  const { role: actorRole, divisionId: actorDiv } = c.get('user')
+  const cat = await prisma.category.findUnique({ where: { id: c.req.param('id') } })
+  if (!cat) return c.json({ error: 'Not found' }, 404)
+
+  if (actorRole === 'division_admin' && cat.divisionId !== actorDiv) {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+
   const body = catSchema.partial().parse(await c.req.json())
-  return c.json(await prisma.category.update({ where: { id: c.req.param('id') }, data: body }))
+  return c.json(await prisma.category.update({ where: { id: cat.id }, data: body }))
 })
 
 export default categories

@@ -1,54 +1,72 @@
 import { Hono } from 'hono'
-import { prisma } from '../lib/prisma'
-import { requireAuth } from '../lib/auth'
+import { prisma } from '../lib/prisma.js'
+import { requireAuth } from '../lib/auth.js'
 import { z } from 'zod'
 
 const formFields = new Hono()
 
-const fieldSchema = z.object({
-  label: z.string().min(1),
-  fieldType: z.enum(['SHORT_TEXT', 'PARAGRAPH', 'DROPDOWN', 'RADIO', 'CHECKBOXES', 'DATE', 'NUMBER', 'FILE_UPLOAD']),
-  options: z.array(z.string()).optional().nullable(),
-  isRequired: z.boolean().default(false),
-  order: z.number().int().optional(),
+formFields.get('/:categoryId/form-schema', requireAuth(), async (c) => {
+  const categoryId = c.req.param('categoryId') as string
+  return c.json(
+    await prisma.formField.findMany({
+      where: { categoryId },
+      orderBy: { order: 'asc' },
+    })
+  )
 })
 
-formFields.put('/:categoryId/form-schema', requireAuth('super_admin', 'division_admin'), async (c) => {
-  const { categoryId } = c.req.param()
-  const fields = z.array(fieldSchema).parse(await c.req.json())
+const fieldItem = z.object({
+  id: z.string().optional(),
+  label: z.string().min(1),
+  fieldType: z.enum([
+    'SHORT_TEXT',
+    'PARAGRAPH',
+    'DROPDOWN',
+    'RADIO',
+    'CHECKBOXES',
+    'DATE',
+    'NUMBER',
+    'FILE_UPLOAD',
+  ]),
+  options: z.array(z.string()).nullable().optional(),
+  isRequired: z.boolean().default(false),
+  order: z.number().int(),
+})
 
-  const labels = fields.map((f) => f.label)
-  if (new Set(labels).size !== labels.length) {
-    return c.json({ error: 'Duplicate field labels not allowed' }, 400)
+const schemaBody = z.object({
+  fields: z.array(fieldItem),
+})
+
+formFields.post('/:categoryId/form-schema', requireAuth('super_admin', 'division_admin'), async (c) => {
+  const { role: actorRole, divisionId: actorDiv } = c.get('user')
+  const categoryId = c.req.param('categoryId') as string
+
+  const cat = await prisma.category.findUnique({ where: { id: categoryId } })
+  if (!cat) return c.json({ error: 'Category not found' }, 404)
+
+  if (actorRole === 'division_admin' && cat.divisionId !== actorDiv) {
+    return c.json({ error: 'Forbidden' }, 403)
   }
 
-  const category = await prisma.category.findUnique({ where: { id: categoryId } })
-  if (!category) {
-    return c.json({ error: 'Category not found' }, 404)
-  }
+  const { fields } = schemaBody.parse(await c.req.json())
 
   await prisma.$transaction(async (tx) => {
     await tx.formField.deleteMany({ where: { categoryId } })
-    if (fields.length > 0) {
+    if (fields.length) {
       await tx.formField.createMany({
-        data: fields.map((f, i) => ({
+        data: fields.map((f) => ({
           categoryId,
           label: f.label,
           fieldType: f.fieldType,
           options: f.options ? f.options : undefined,
           isRequired: f.isRequired,
-          order: i + 1,
+          order: f.order,
         })),
       })
     }
   })
 
-  const updatedFields = await prisma.formField.findMany({
-    where: { categoryId },
-    orderBy: { order: 'asc' },
-  })
-
-  return c.json(updatedFields)
+  return c.json(await prisma.formField.findMany({ where: { categoryId }, orderBy: { order: 'asc' } }))
 })
 
 export default formFields

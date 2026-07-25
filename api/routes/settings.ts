@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
-import { prisma } from '../lib/prisma'
-import { requireAuth } from '../lib/auth'
+import { prisma } from '../lib/prisma.js'
+import { requireAuth } from '../lib/auth.js'
 import { z } from 'zod'
 
 const settings = new Hono()
