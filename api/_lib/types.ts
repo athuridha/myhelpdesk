@@ -1,5 +1,5 @@
 import { Context } from 'hono'
-import { JwtPayload } from './auth.js'
+import { JwtPayload } from './auth'
 
 declare module 'hono' {
   interface ContextVariableMap {
