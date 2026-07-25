@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 import { prisma } from '../_lib/prisma.js'
-import { requireAuth } from '../_lib/auth.js'
+import { requireAuth, JwtPayload } from '../_lib/auth.js'
 import { z } from 'zod'
 
-const settings = new Hono()
+const settings = new Hono<{ Variables: { user: JwtPayload } }>()
 
 settings.get('/app-name', async (c) => {
   const setting = await prisma.systemSetting.findUnique({ where: { key: 'APP_NAME' } })

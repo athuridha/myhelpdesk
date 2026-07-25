@@ -1,10 +1,10 @@
 import { Hono } from 'hono'
 import bcrypt from 'bcryptjs'
 import { prisma } from '../_lib/prisma.js'
-import { requireAuth } from '../_lib/auth.js'
+import { requireAuth, JwtPayload } from '../_lib/auth.js'
 import { z } from 'zod'
 
-const divisions = new Hono()
+const divisions = new Hono<{ Variables: { user: JwtPayload } }>()
 
 divisions.get('/', requireAuth(), async (c) => {
   return c.json(

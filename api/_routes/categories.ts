@@ -3,7 +3,7 @@ import { prisma } from '../_lib/prisma.js'
 import { requireAuth, JwtPayload } from '../_lib/auth.js'
 import { z } from 'zod'
 
-const categories = new Hono()
+const categories = new Hono<{ Variables: { user: JwtPayload } }>()
 
 categories.get('/', requireAuth(), async (c) => {
   const { divisionId: qDiv } = c.req.query()
@@ -27,8 +27,7 @@ const catSchema = z.object({
 })
 
 categories.post('/', requireAuth('super_admin', 'division_admin'), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { role: actorRole, divisionId: actorDiv } = user
+  const { role: actorRole, divisionId: actorDiv } = c.get('user')
   const body = catSchema.parse(await c.req.json())
 
   if (actorRole === 'division_admin' && body.divisionId !== actorDiv) {
@@ -39,8 +38,7 @@ categories.post('/', requireAuth('super_admin', 'division_admin'), async (c) => 
 })
 
 categories.patch('/:id', requireAuth('super_admin', 'division_admin'), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { role: actorRole, divisionId: actorDiv } = user
+  const { role: actorRole, divisionId: actorDiv } = c.get('user')
   const cat = await prisma.category.findUnique({ where: { id: c.req.param('id') } })
   if (!cat) return c.json({ error: 'Not found' }, 404)
 

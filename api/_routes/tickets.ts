@@ -5,11 +5,10 @@ import { calculateDueDate } from '../_lib/sla.js'
 import { z } from 'zod'
 import { put } from '@vercel/blob'
 
-const tickets = new Hono()
+const tickets = new Hono<{ Variables: { user: JwtPayload } }>()
 
 tickets.get('/', requireAuth(), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { userId, role, divisionId } = user
+  const { userId, role, divisionId } = c.get('user')
   const { status, priority, search, divisionId: qDiv, startDate, endDate } = c.req.query()
 
   const where: Record<string, unknown> = {}
@@ -57,8 +56,7 @@ tickets.get('/', requireAuth(), async (c) => {
 })
 
 tickets.get('/:id', requireAuth(), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { userId, role, divisionId } = user
+  const { userId, role, divisionId } = c.get('user')
   const ticketId = c.req.param('id') as string
   const ticket = await prisma.ticket.findUnique({
     where: { id: ticketId },
@@ -102,8 +100,7 @@ const submitSchema = z.object({
 })
 
 tickets.post('/', requireAuth(), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { userId } = user
+  const { userId } = c.get('user')
   const body = submitSchema.parse(await c.req.json())
 
   const category = await prisma.category.findUnique({ where: { id: body.categoryId } })
@@ -166,8 +163,7 @@ const patchSchema = z.object({
 })
 
 tickets.patch('/:id', requireAuth(), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { userId, role } = user
+  const { userId, role } = c.get('user')
   if (role === 'requester') return c.json({ error: 'Forbidden' }, 403)
 
   const body = patchSchema.parse(await c.req.json())
@@ -218,8 +214,7 @@ tickets.patch('/:id', requireAuth(), async (c) => {
 const commentSchema = z.object({ content: z.string().min(1), isInternalNote: z.boolean().default(false) })
 
 tickets.post('/:id/comments', requireAuth(), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { userId, role } = user
+  const { userId, role } = c.get('user')
   const ticketId = c.req.param('id') as string
   const body = commentSchema.parse(await c.req.json())
   if (body.isInternalNote && role === 'requester') return c.json({ error: 'Forbidden' }, 403)
@@ -238,8 +233,7 @@ const attachmentSchema = z.object({
 })
 
 tickets.post('/:id/attachments', requireAuth(), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { userId } = user
+  const { userId } = c.get('user')
   const ticketId = c.req.param('id') as string
   const body = attachmentSchema.parse(await c.req.json())
 

@@ -4,11 +4,10 @@ import { prisma } from '../_lib/prisma.js'
 import { requireAuth, JwtPayload } from '../_lib/auth.js'
 import { z } from 'zod'
 
-const users = new Hono()
+const users = new Hono<{ Variables: { user: JwtPayload } }>()
 
 users.get('/', requireAuth('super_admin', 'division_admin'), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { role, divisionId } = user
+  const { role, divisionId } = c.get('user')
   const where = role === 'super_admin' ? {} : { divisionId: divisionId ?? '' }
   return c.json(
     await prisma.user.findMany({
@@ -37,8 +36,7 @@ const createSchema = z.object({
 })
 
 users.post('/', requireAuth('super_admin', 'division_admin'), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { role: actorRole, divisionId: actorDiv } = user
+  const { role: actorRole, divisionId: actorDiv } = c.get('user')
   const body = createSchema.parse(await c.req.json())
 
   const targetDiv = body.divisionId || (actorRole === 'division_admin' ? actorDiv : undefined)
@@ -83,8 +81,7 @@ const updateSchema = z.object({
 })
 
 users.patch('/:id', requireAuth('super_admin', 'division_admin'), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { role: actorRole, divisionId: actorDiv } = user
+  const { role: actorRole, divisionId: actorDiv } = c.get('user')
   const targetUser = await prisma.user.findUnique({ where: { id: c.req.param('id') } })
   if (!targetUser) return c.json({ error: 'User tidak ditemukan' }, 404)
 
@@ -111,8 +108,7 @@ users.patch('/:id', requireAuth('super_admin', 'division_admin'), async (c) => {
 })
 
 users.patch('/:id/toggle-active', requireAuth('super_admin', 'division_admin'), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { role: actorRole, divisionId: actorDiv } = user
+  const { role: actorRole, divisionId: actorDiv } = c.get('user')
   const targetUser = await prisma.user.findUnique({ where: { id: c.req.param('id') } })
   if (!targetUser) return c.json({ error: 'User tidak ditemukan' }, 404)
 

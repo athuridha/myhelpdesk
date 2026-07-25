@@ -3,7 +3,7 @@ import { prisma } from '../_lib/prisma.js'
 import { requireAuth, JwtPayload } from '../_lib/auth.js'
 import { z } from 'zod'
 
-const formFields = new Hono()
+const formFields = new Hono<{ Variables: { user: JwtPayload } }>()
 
 formFields.get('/:categoryId/form-schema', requireAuth(), async (c) => {
   const categoryId = c.req.param('categoryId') as string
@@ -38,8 +38,7 @@ const schemaBody = z.object({
 })
 
 formFields.post('/:categoryId/form-schema', requireAuth('super_admin', 'division_admin'), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { role: actorRole, divisionId: actorDiv } = user
+  const { role: actorRole, divisionId: actorDiv } = c.get('user')
   const categoryId = c.req.param('categoryId') as string
 
   const cat = await prisma.category.findUnique({ where: { id: categoryId } })

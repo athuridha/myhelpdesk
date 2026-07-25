@@ -2,11 +2,10 @@ import { Hono } from 'hono'
 import { prisma } from '../_lib/prisma.js'
 import { requireAuth, JwtPayload } from '../_lib/auth.js'
 
-const notifications = new Hono()
+const notifications = new Hono<{ Variables: { user: JwtPayload } }>()
 
 notifications.get('/', requireAuth(), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { userId } = user
+  const { userId } = c.get('user')
   return c.json(
     await prisma.notification.findMany({
       where: { userId },
@@ -17,8 +16,7 @@ notifications.get('/', requireAuth(), async (c) => {
 })
 
 notifications.patch('/read-all', requireAuth(), async (c) => {
-  const user = c.get('user') as JwtPayload
-  const { userId } = user
+  const { userId } = c.get('user')
   await prisma.notification.updateMany({
     where: { userId, isRead: false },
     data: { isRead: true },
