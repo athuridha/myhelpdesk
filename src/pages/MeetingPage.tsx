@@ -14,6 +14,9 @@ import {
   Search,
   Trash2,
   Calendar,
+  Globe,
+  Lock,
+  Layers,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +27,7 @@ export interface DbMeetingRoom {
   accessType: 'PUBLIC' | 'PRIVATE'
   hostId: string
   isActive: boolean
+  scheduledAt?: string | null
   createdAt: string
   host: {
     id: string
@@ -39,7 +43,7 @@ export function MeetingPage() {
   const qc = useQueryClient()
 
   const [search, setSearch] = useState('')
-  const [filterType, setFilterType] = useState<'ALL' | 'PUBLIC' | 'PRIVATE'>('ALL')
+  const [filterType, setFilterType] = useState<'ALL' | 'PUBLIC' | 'PRIVATE' | 'SCHEDULED'>('ALL')
   const [joinCode, setJoinCode] = useState('')
   const [copiedLink, setCopiedLink] = useState<string | null>(null)
 
@@ -82,8 +86,11 @@ export function MeetingPage() {
   }
 
   const filteredRooms = dbRooms?.filter((room) => {
-    const matchesType =
-      filterType === 'ALL' ? true : room.accessType === filterType
+    let matchesType = true
+    if (filterType === 'PUBLIC') matchesType = room.accessType === 'PUBLIC'
+    else if (filterType === 'PRIVATE') matchesType = room.accessType === 'PRIVATE'
+    else if (filterType === 'SCHEDULED') matchesType = Boolean(room.scheduledAt)
+
     const matchesSearch =
       room.title.toLowerCase().includes(search.toLowerCase()) ||
       room.host.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -141,25 +148,31 @@ export function MeetingPage() {
             </div>
 
             {/* Filter Segment Tabs */}
-            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200/80 shrink-0">
+            <div className="flex bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 shrink-0 gap-0.5">
               {[
-                { key: 'ALL', label: 'Semua' },
-                { key: 'PUBLIC', label: '🌐 Publik' },
-                { key: 'PRIVATE', label: '🔒 Privat' },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setFilterType(tab.key as 'ALL' | 'PUBLIC' | 'PRIVATE')}
-                  className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
-                    filterType === tab.key
-                      ? 'bg-white text-slate-900 shadow-2xs font-bold'
-                      : 'text-slate-500 hover:text-slate-800'
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
+                { key: 'ALL', label: 'Semua', icon: Layers },
+                { key: 'PUBLIC', label: 'Publik', icon: Globe },
+                { key: 'PRIVATE', label: 'Privat', icon: Lock },
+                { key: 'SCHEDULED', label: 'Jadwal Mendatang', icon: Calendar },
+              ].map((tab) => {
+                const Icon = tab.icon
+                const isActive = filterType === tab.key
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setFilterType(tab.key as any)}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
+                      isActive
+                        ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                        : 'text-slate-500 hover:text-slate-800'
+                    )}
+                  >
+                    <Icon className={cn('w-3.5 h-3.5', isActive ? 'text-indigo-600' : 'text-slate-400')} />
+                    <span>{tab.label}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -224,16 +237,29 @@ export function MeetingPage() {
                   >
                     <div className="space-y-2.5">
                       <div className="flex items-center justify-between gap-1">
-                        <span
-                          className={cn(
-                            'px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border',
-                            room.accessType === 'PUBLIC'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border',
+                              room.accessType === 'PUBLIC'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                            )}
+                          >
+                            {room.accessType === 'PUBLIC' ? (
+                              <Globe className="w-3 h-3 text-emerald-600" />
+                            ) : (
+                              <Lock className="w-3 h-3 text-indigo-600" />
+                            )}
+                            <span>{room.accessType === 'PUBLIC' ? 'Publik' : 'Privat'}</span>
+                          </span>
+                          {room.scheduledAt && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              <Calendar className="w-3 h-3 text-amber-600" />
+                              <span>Terjadwal</span>
+                            </span>
                           )}
-                        >
-                          {room.accessType === 'PUBLIC' ? '🌐 Publik' : '🔒 Privat'}
-                        </span>
+                        </div>
 
                         {isHost && (
                           <button
@@ -256,10 +282,17 @@ export function MeetingPage() {
                           Host: <strong className="text-slate-800">{room.host.name}</strong>
                           {room.host.division?.code ? ` (${room.host.division.code})` : ''}
                         </p>
-                        <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-slate-400" />
-                          <span>{formatDateTime(room.createdAt)}</span>
-                        </p>
+                        {room.scheduledAt ? (
+                          <p className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-1 rounded-md flex items-center gap-1 mt-1">
+                            <Calendar className="w-3 h-3 text-amber-600" />
+                            <span>Jadwal: {formatDateTime(room.scheduledAt)}</span>
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-slate-400" />
+                            <span>{formatDateTime(room.createdAt)}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
 

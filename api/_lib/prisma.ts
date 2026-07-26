@@ -48,7 +48,11 @@ function initPrisma(): PrismaClient {
 }
 
 export function getPrisma(): PrismaClient {
-  if (!globalForPrisma.prisma || !(globalForPrisma.prisma as any).meetingRoom) {
+  if (
+    !globalForPrisma.prisma ||
+    !(globalForPrisma.prisma as any).meetingRoom ||
+    process.env.NODE_ENV !== 'production'
+  ) {
     globalForPrisma.prisma = initPrisma()
   }
   return globalForPrisma.prisma

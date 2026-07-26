@@ -167,14 +167,15 @@ model DirectMessage {
 }
 
 model MeetingRoom {
-  id         String   @id @default(cuid())
-  roomId     String   @unique
-  title      String
-  accessType String   @default("PUBLIC")
-  hostId     String
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  host       User     @relation(fields: [hostId], references: [id])
+  id          String    @id @default(cuid())
+  roomId      String    @unique
+  title       String
+  accessType  String    @default("PUBLIC")
+  hostId      String
+  isActive    Boolean   @default(true)
+  scheduledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  host        User      @relation(fields: [hostId], references: [id])
 }
 

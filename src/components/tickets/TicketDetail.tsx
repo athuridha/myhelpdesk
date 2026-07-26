@@ -24,7 +24,6 @@ import {
   Download,
   Video,
 } from 'lucide-react'
-import { useUiStore } from '@/store/ui'
 import { cn } from '@/lib/utils'
 
 interface TicketAttachmentItem {
@@ -103,7 +102,6 @@ export function TicketDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { startVideoCall } = useUiStore()
   const qc = useQueryClient()
 
   // Form states for right action sidebar
@@ -169,6 +167,17 @@ export function TicketDetail() {
     onSuccess: () => {
       setSelectedFile(null)
       qc.invalidateQueries({ queryKey: ['ticket', id] })
+    },
+  })
+
+  const createTicketMeeting = useMutation({
+    mutationFn: () => apiFetch<{ roomId: string; meetingUrl: string }>(`/tickets/${id}/meeting`, { method: 'POST' }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['ticket', id] })
+      navigate(data.meetingUrl || `/room/${data.roomId}`)
+    },
+    onError: (err: Error) => {
+      alert(`Gagal membuat video meeting: ${err.message}`)
     },
   })
 
@@ -290,17 +299,13 @@ export function TicketDetail() {
 
           <div className="flex items-center gap-2.5">
             <button
-              onClick={() =>
-                startVideoCall({
-                  roomId: `MyHelpDesk-Ticket-${ticket.ticketNumber}`,
-                  roomTitle: `Video Call Support — Tiket #${ticket.ticketNumber}`,
-                })
-              }
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
-              title="Mulai Panggilan Video Conference & Screen Sharing"
+              onClick={() => createTicketMeeting.mutate()}
+              disabled={createTicketMeeting.isPending}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
+              title="Mulai Video Call untuk Tiket ini"
             >
               <Video className="w-3.5 h-3.5" />
-              <span>Mulai Video Call</span>
+              <span>{createTicketMeeting.isPending ? 'Membuat Room...' : 'Mulai Video Call'}</span>
             </button>
 
             <button

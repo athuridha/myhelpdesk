@@ -15,6 +15,7 @@ import {
   Check,
   X,
   BellRing,
+  Calendar,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { DbMeetingRoom } from '@/pages/MeetingPage'
@@ -45,9 +46,11 @@ export function NewMeetingPage() {
     queryFn: () => apiFetch('/users'),
   })
 
+  const [scheduledAt, setScheduledAt] = useState('')
+
   // Create room mutation
   const createRoomMutation = useMutation({
-    mutationFn: (payload: { title: string; accessType: 'PUBLIC' | 'PRIVATE' }) =>
+    mutationFn: (payload: { title: string; accessType: 'PUBLIC' | 'PRIVATE'; scheduledAt?: string }) =>
       apiFetch<DbMeetingRoom>('/meetings', { method: 'POST', body: JSON.stringify(payload) }),
     onSuccess: (newRoom) => {
       qc.invalidateQueries({ queryKey: ['db-meeting-rooms'] })
@@ -99,7 +102,11 @@ export function NewMeetingPage() {
   const handleCreateRoom = (e: React.FormEvent) => {
     e.preventDefault()
     const title = roomTopic.trim() || defaultRoomName
-    createRoomMutation.mutate({ title, accessType })
+    createRoomMutation.mutate({
+      title,
+      accessType,
+      scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
+    })
   }
 
   return (
@@ -175,8 +182,8 @@ export function NewMeetingPage() {
                     : 'text-slate-500 hover:text-slate-900'
                 )}
               >
-                <Globe className="w-4 h-4" />
-                <span>🌐 Publik (Siapa Saja)</span>
+                <Globe className="w-4 h-4 text-emerald-600" />
+                <span>Publik (Siapa Saja)</span>
               </button>
 
               <button
@@ -189,14 +196,30 @@ export function NewMeetingPage() {
                     : 'text-slate-500 hover:text-slate-900'
                 )}
               >
-                <Lock className="w-4 h-4" />
-                <span>🔒 Privat (Terbatas)</span>
+                <Lock className="w-4 h-4 text-indigo-600" />
+                <span>Privat (Terbatas)</span>
               </button>
             </div>
             <p className="text-[11px] text-slate-400">
               {accessType === 'PUBLIC'
-                ? '🌐 Siapa saja yang memiliki link meeting dapat langsung bergabung.'
-                : '🔒 Pertemuan dibatasi hanya untuk staf/anggota terundang.'}
+                ? 'Siapa saja yang memiliki link meeting dapat langsung bergabung.'
+                : 'Pertemuan dibatasi hanya untuk staf/anggota terundang.'}
+            </p>
+          </div>
+          {/* Jadwalkan Rapat (Opsional) */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Jadwalkan Rapat Mendatang (Opsional)</span>
+            </label>
+            <input
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl bg-slate-50/80 border border-slate-200 text-slate-900 text-xs focus:bg-white focus:outline-none focus:border-indigo-500 transition-colors"
+            />
+            <p className="text-[11px] text-slate-400">
+              Kosongkan jika rapat akan dimulai secara langsung (*Live Meeting*) sekarang.
             </p>
           </div>
 

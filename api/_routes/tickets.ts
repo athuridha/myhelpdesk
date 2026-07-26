@@ -319,4 +319,63 @@ tickets.post('/:id/attachments', requireAuth(), async (c) => {
   return c.json(attachment, 201)
 })
 
+// POST /api/tickets/:id/meeting — Create video meeting for ticket + post comment & notify requester
+tickets.post('/:id/meeting', requireAuth(), async (c) => {
+  const { userId } = c.get('user')
+  const ticketId = c.req.param('id') as string
+
+  const currentUser = await prisma.user.findUnique({ where: { id: userId } })
+  const name = currentUser?.name || 'Staf HelpDesk'
+
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+    include: { requester: true, assignee: true },
+  })
+
+  if (!ticket) return c.json({ error: 'Tiket tidak ditemukan' }, 404)
+
+  const cleanSubject = ticket.subject.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'tiket'
+  const roomId = `HelpDesk-Tiket-${ticket.ticketNumber || cleanSubject}-${Date.now().toString().slice(-4)}`
+  const roomTitle = `Video Call Tiket #${ticket.ticketNumber}: ${ticket.subject}`
+
+  // 1. Create Meeting Room in DB
+  const room = await prisma.meetingRoom.create({
+    data: {
+      roomId,
+      title: roomTitle,
+      accessType: 'PUBLIC',
+      hostId: userId,
+    },
+  })
+
+  // 2. Post automatic comment into ticket timeline
+  const commentContent = `🎥 **Video Meeting Dimulai oleh ${name}**\n\nLink Ruang Rapat: [Klik untuk Bergabung di Video Meeting](/room/${roomId})`
+  await prisma.ticketComment.create({
+    data: {
+      ticketId,
+      authorId: userId,
+      content: commentContent,
+      isInternalNote: false,
+    },
+  })
+
+  // 3. Create real-time notification for requester/assignee
+  const targetUserIds = Array.from(
+    new Set([ticket.requesterId, ticket.assigneeId].filter((id): id is string => Boolean(id) && id !== userId))
+  )
+
+  for (const recipientId of targetUserIds) {
+    await prisma.notification.create({
+      data: {
+        userId: recipientId,
+        ticketId,
+        type: 'MEETING_INVITE',
+        message: `🎥 Undangan Video Call Tiket #${ticket.ticketNumber} oleh ${name}: "/room/${roomId}"`,
+      },
+    })
+  }
+
+  return c.json({ room, roomId, meetingUrl: `/room/${roomId}` }, 201)
+})
+
 export default tickets

@@ -12,6 +12,7 @@ import { NewMeetingPage } from '@/pages/NewMeetingPage'
 import { RoomPage } from '@/pages/RoomPage'
 import { PrivateChatWidget } from '@/components/chat/PrivateChatWidget'
 import { VideoCallWidget } from '@/components/video/VideoCallWidget'
+import { MeetingInviteToast } from '@/components/video/MeetingInviteToast'
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 min-w-0 min-h-[100dvh] overflow-y-auto">{children}</main>
       <PrivateChatWidget />
       <VideoCallWidget />
+      <MeetingInviteToast />
     </div>
   )
 }

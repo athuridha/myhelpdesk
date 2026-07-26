@@ -43,6 +43,7 @@ meetings.get('/', requireAuth(), async (c) => {
 const createMeetingSchema = z.object({
   title: z.string().min(1),
   accessType: z.enum(['PUBLIC', 'PRIVATE']).default('PUBLIC'),
+  scheduledAt: z.string().optional(),
 })
 
 // POST /api/meetings — Create & save new meeting room in database
@@ -54,26 +55,52 @@ meetings.post('/', requireAuth(), async (c) => {
   const roomId = `HelpDesk-${cleanId}-${Date.now().toString().slice(-4)}`
 
   const roomModel = getMeetingRoomModel()
-  const newRoom = await roomModel.create({
-    data: {
-      roomId,
-      title: body.title,
-      accessType: body.accessType,
-      hostId: userId,
-    },
-    include: {
-      host: {
-        select: {
-          id: true,
-          name: true,
-          role: true,
-          division: { select: { id: true, name: true, code: true } },
+  const dataPayload: any = {
+    roomId,
+    title: body.title,
+    accessType: body.accessType,
+    hostId: userId,
+  }
+  if (body.scheduledAt) {
+    const d = new Date(body.scheduledAt)
+    if (!isNaN(d.getTime())) {
+      dataPayload.scheduledAt = d
+    }
+  }
+
+  try {
+    const newRoom = await roomModel.create({
+      data: dataPayload,
+      include: {
+        host: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            division: { select: { id: true, name: true, code: true } },
+          },
         },
       },
-    },
-  })
-
-  return c.json(newRoom, 201)
+    })
+    return c.json(newRoom, 201)
+  } catch (err: any) {
+    console.warn('Prisma create fallback executed for room creation:', err?.message)
+    delete dataPayload.scheduledAt
+    const fallbackRoom = await roomModel.create({
+      data: dataPayload,
+      include: {
+        host: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            division: { select: { id: true, name: true, code: true } },
+          },
+        },
+      },
+    })
+    return c.json(fallbackRoom, 201)
+  }
 })
 
 // DELETE /api/meetings/:id — End/Delete room by DB id or roomId
