@@ -11,6 +11,7 @@ import {
 } from '@dnd-kit/core'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { useTickets, isOverdue, type TicketRow } from '@/hooks/useTickets'
+import { useAuth } from '@/hooks/useAuth'
 import { useUiStore } from '@/store/ui'
 import { apiFetch } from '@/lib/api'
 import { formatDate } from '@/lib/utils'
@@ -54,12 +55,20 @@ function TicketCard({ ticket }: { ticket: TicketRow }) {
 }
 
 export function BoardView() {
+  const { user } = useAuth()
   const { activeFilters } = useUiStore()
   const { data: tickets } = useTickets(activeFilters)
   const qc = useQueryClient()
   const [draggingId, setDraggingId] = useState<string | null>(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  const canHandle = (ticket: TicketRow) => {
+    if (!user) return false
+    if (user.role === 'super_admin') return true
+    if (['division_admin', 'agent'].includes(user.role) && user.divisionId === ticket.division.id) return true
+    return false
+  }
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
@@ -86,6 +95,10 @@ export function BoardView() {
     if (COLUMNS.some(c => c.key === targetCol)) {
       const ticket = tickets?.find(t => t.id === active.id)
       if (ticket && ticket.status !== targetCol) {
+        if (!canHandle(ticket)) {
+          alert(`Anda tidak memiliki akses penanganan untuk tiket divisi ${ticket.division.name}.`)
+          return
+        }
         updateStatus.mutate({ id: ticket.id, status: targetCol })
       }
     }
@@ -106,7 +119,7 @@ export function BoardView() {
             <div
               key={col.key}
               id={col.key}
-              className="shrink-0 w-64 bg-slate-50 rounded-lg flex flex-col"
+              className="shrink-0 w-[82vw] sm:w-72 md:w-64 bg-slate-100/70 border border-slate-200/60 rounded-2xl flex flex-col"
             >
               <div className="px-3 py-2 font-medium text-sm border-b flex items-center justify-between">
                 <span>{col.label}</span>

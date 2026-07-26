@@ -7,12 +7,19 @@ import { TicketDetailPage } from '@/pages/TicketDetailPage'
 import { NewTicketPage } from '@/pages/NewTicketPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { MeetingPage } from '@/pages/MeetingPage'
+import { NewMeetingPage } from '@/pages/NewMeetingPage'
+import { RoomPage } from '@/pages/RoomPage'
+import { PrivateChatWidget } from '@/components/chat/PrivateChatWidget'
+import { VideoCallWidget } from '@/components/video/VideoCallWidget'
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex min-h-[100dvh] bg-slate-50 overflow-hidden relative">
       <Sidebar />
-      <main className="flex-1 min-w-0 h-screen overflow-y-auto">{children}</main>
+      <main className="flex-1 min-w-0 min-h-[100dvh] overflow-y-auto">{children}</main>
+      <PrivateChatWidget />
+      <VideoCallWidget />
     </div>
   )
 }
@@ -84,6 +91,36 @@ export default function App() {
           <RequireAuth>
             <AppLayout>
               <DashboardPage />
+            </AppLayout>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/meeting"
+        element={
+          <RequireAuth>
+            <AppLayout>
+              <MeetingPage />
+            </AppLayout>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/new-meeting"
+        element={
+          <RequireAuth>
+            <AppLayout>
+              <NewMeetingPage />
+            </AppLayout>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/room/:roomId"
+        element={
+          <RequireAuth>
+            <AppLayout>
+              <RoomPage />
             </AppLayout>
           </RequireAuth>
         }

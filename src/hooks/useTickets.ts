@@ -13,7 +13,7 @@ export interface TicketRow {
   requester: { name: string }
   assignee: { name: string } | null
   category: { name: string }
-  division: { name: string; code: string }
+  division: { id: string; name: string; code: string }
 }
 
 export function useTickets(filters: Record<string, string> = {}) {

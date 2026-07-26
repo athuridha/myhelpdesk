@@ -10,6 +10,19 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
 
 function initPrisma(): PrismaClient {
   try {
+    if (typeof require !== 'undefined' && require.cache) {
+      Object.keys(require.cache).forEach((key) => {
+        if (key.includes('@prisma') || key.includes('.prisma')) {
+          delete require.cache[key]
+        }
+      })
+    }
+
+    const DynamicClient =
+      typeof require !== 'undefined'
+        ? require('@prisma/client').PrismaClient
+        : PrismaClient
+
     const Pool = pg.Pool || (pg as unknown as { default: { Pool: typeof pg.Pool } }).default?.Pool
     const isSsl = Boolean(
       connectionString &&
@@ -23,14 +36,25 @@ function initPrisma(): PrismaClient {
       connectionTimeoutMillis: 10000,
     })
     const adapter = new PrismaPg(pool)
-    return new PrismaClient({ adapter, log: ['error', 'warn'] })
+    return new DynamicClient({ adapter, log: ['error', 'warn'] })
   } catch (err) {
     console.error('Error initializing PrismaPg adapter, falling back to standard PrismaClient:', err)
-    return new PrismaClient({ log: ['error', 'warn'] })
+    const DynamicClient =
+      typeof require !== 'undefined'
+        ? require('@prisma/client').PrismaClient
+        : PrismaClient
+    return new DynamicClient({ log: ['error', 'warn'] })
   }
 }
 
-export const prisma: PrismaClient = globalForPrisma.prisma || initPrisma()
+export function getPrisma(): PrismaClient {
+  if (!globalForPrisma.prisma || !(globalForPrisma.prisma as any).meetingRoom) {
+    globalForPrisma.prisma = initPrisma()
+  }
+  return globalForPrisma.prisma
+}
+
+export const prisma: PrismaClient = getPrisma()
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma

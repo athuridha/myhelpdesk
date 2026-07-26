@@ -16,14 +16,22 @@ tickets.get('/', requireAuth(), async (c) => {
   if (role === 'requester') {
     where.requesterId = userId
   } else if (role === 'agent' || role === 'division_admin') {
-    where.divisionId = divisionId
+    where.OR = [
+      { divisionId: divisionId },
+      { requesterId: userId },
+    ]
   }
 
   if (qDiv && role === 'super_admin') {
     where.divisionId = qDiv
   }
-  if (status) {
+  if (status === 'ALL') {
+    // Tampilkan semua tiket termasuk yang sudah SELESAI / DITUTUP
+  } else if (status) {
     where.status = status
+  } else {
+    // Default: Hanya tampilkan Tiket Aktif (Sembunyikan SELESAI, DITUTUP, SPAM, TRASH)
+    where.status = { notIn: ['SELESAI', 'DITUTUP', 'RESOLVED', 'CLOSED', 'SPAM', 'TRASH'] }
   }
   if (priority) {
     where.priority = priority
@@ -57,9 +65,12 @@ tickets.get('/', requireAuth(), async (c) => {
 
 tickets.get('/:id', requireAuth(), async (c) => {
   const { userId, role, divisionId } = c.get('user')
-  const ticketId = c.req.param('id') as string
-  const ticket = await prisma.ticket.findUnique({
-    where: { id: ticketId },
+  const ticketParam = c.req.param('id') as string
+
+  const ticket = await prisma.ticket.findFirst({
+    where: {
+      OR: [{ id: ticketParam }, { ticketNumber: ticketParam }],
+    },
     include: {
       requester: { select: { id: true, name: true, email: true } },
       assignee: { select: { id: true, name: true, email: true } },
@@ -79,16 +90,23 @@ tickets.get('/:id', requireAuth(), async (c) => {
       },
     },
   })
+
   if (!ticket) return c.json({ error: 'Ticket tidak ditemukan' }, 404)
 
-  if (role === 'requester' && ticket.requesterId !== userId) return c.json({ error: 'Forbidden' }, 403)
-  if (role === 'agent' && ticket.divisionId !== divisionId) return c.json({ error: 'Forbidden' }, 403)
-  if (role === 'division_admin' && ticket.divisionId !== divisionId) return c.json({ error: 'Forbidden' }, 403)
+  const isSuperAdmin = role === 'super_admin'
+  const isRequester = ticket.requesterId === userId
+  const isDivisionStaff = (role === 'agent' || role === 'division_admin') && ticket.divisionId === divisionId
 
+  if (!isSuperAdmin && !isRequester && !isDivisionStaff) {
+    return c.json({ error: 'Forbidden — Anda tidak memiliki akses ke tiket divisi lain ini' }, 403)
+  }
+
+  const isInternalNoteVisible = isSuperAdmin || isDivisionStaff
   const result = {
     ...ticket,
-    comments: role === 'requester' ? ticket.comments.filter((c) => !c.isInternalNote) : ticket.comments,
+    comments: isInternalNoteVisible ? ticket.comments : ticket.comments.filter((c) => !c.isInternalNote),
   }
+
   return c.json(result)
 })
 
@@ -163,14 +181,36 @@ const patchSchema = z.object({
 })
 
 tickets.patch('/:id', requireAuth(), async (c) => {
-  const { userId, role } = c.get('user')
-  if (role === 'requester') return c.json({ error: 'Forbidden' }, 403)
+  const { userId, role, divisionId } = c.get('user')
 
   const body = patchSchema.parse(await c.req.json())
-  const id = c.req.param('id') as string
+  const ticketParam = c.req.param('id') as string
 
-  const existing = await prisma.ticket.findUnique({ where: { id } })
+  const existing = await prisma.ticket.findFirst({
+    where: { OR: [{ id: ticketParam }, { ticketNumber: ticketParam }] },
+  })
   if (!existing) return c.json({ error: 'Ticket tidak ditemukan' }, 404)
+  const id = existing.id
+
+  const isSuperAdmin = role === 'super_admin'
+  const isTargetDivisionStaff =
+    ['division_admin', 'agent'].includes(role) && divisionId === existing.divisionId
+  const isRequester = userId === existing.requesterId
+
+  const canHandleTicket = isSuperAdmin || isTargetDivisionStaff
+
+  if (!canHandleTicket) {
+    // Requesters can only close their ticket or re-open it if resolved
+    const isOnlyClosingOrReopening =
+      isRequester &&
+      body.assigneeId === undefined &&
+      body.priority === undefined &&
+      (body.status === 'DITUTUP' || body.status === 'SEDANG_DIKERJAKAN' || body.status === 'BARU')
+
+    if (!isOnlyClosingOrReopening) {
+      return c.json({ error: 'Anda tidak memiliki wewenang untuk menangani tiket divisi ini.' }, 403)
+    }
+  }
 
   const updateData: Record<string, unknown> = { ...body }
   if (body.status) {

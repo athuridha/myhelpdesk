@@ -34,6 +34,9 @@ model User {
   activityLogs     TicketActivityLog[]
   notifications    Notification[]
   attachments      TicketAttachment[]
+  sentMessages     DirectMessage[]     @relation("sentMessages")
+  receivedMessages DirectMessage[]     @relation("receivedMessages")
+  hostedMeetings   MeetingRoom[]
 }
 
 model Category {
@@ -151,3 +154,27 @@ model SystemSetting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+model DirectMessage {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  sender     User     @relation("sentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("receivedMessages", fields: [receiverId], references: [id])
+}
+
+model MeetingRoom {
+  id         String   @id @default(cuid())
+  roomId     String   @unique
+  title      String
+  accessType String   @default("PUBLIC")
+  hostId     String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  host       User     @relation(fields: [hostId], references: [id])
+}
+

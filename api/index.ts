@@ -9,6 +9,8 @@ import tickets from './_routes/tickets.js'
 import notifications from './_routes/notifications.js'
 import users from './_routes/users.js'
 import settings from './_routes/settings.js'
+import chat from './_routes/chat.js'
+import meetings from './_routes/meetings.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -51,5 +53,7 @@ app.route('/tickets', tickets)
 app.route('/notifications', notifications)
 app.route('/users', users)
 app.route('/settings', settings)
+app.route('/chat', chat)
+app.route('/meetings', meetings)
 
 export default app
