@@ -14,6 +14,8 @@ import { PrivateChatWidget } from '@/components/chat/PrivateChatWidget'
 import { VideoCallWidget } from '@/components/video/VideoCallWidget'
 import { MeetingInviteToast } from '@/components/video/MeetingInviteToast'
 
+import { DatabasePreloader } from '@/components/common/DatabasePreloader'
+
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-[100dvh] bg-slate-50 overflow-hidden relative">
@@ -28,9 +30,15 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
-  if (isLoading) return <div className="p-8 text-xs text-slate-400">Memuat...</div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 text-xs font-medium">
+        Memeriksa sesi pengguna...
+      </div>
+    )
+  }
   if (!user) return <Navigate to="/login" replace />
-  return <>{children}</>
+  return <DatabasePreloader>{children}</DatabasePreloader>
 }
 
 export default function App() {

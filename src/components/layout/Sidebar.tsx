@@ -84,9 +84,6 @@ export function Sidebar() {
                 <div className="min-w-0">
                   <h1 className="font-heading font-bold text-slate-900 text-sm tracking-tight leading-none flex items-center gap-1.5 truncate">
                     <span className="truncate">{appName}</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">
-                      v1.0
-                    </span>
                   </h1>
                   <p className="text-[10px] text-slate-400 mt-0.5 truncate">Multi-Dept Desk</p>
                 </div>

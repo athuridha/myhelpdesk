@@ -134,7 +134,17 @@ export function ListView() {
 
         {/* Tickets Content */}
         {isLoading ? (
-          <div className="p-12 text-center text-slate-400 text-xs">Memuat data tiket...</div>
+          <div className="bg-white rounded-xl border border-slate-200/70 p-4 space-y-3 shadow-2xs">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center gap-4 animate-pulse py-2 border-b border-slate-100 last:border-none">
+                <div className="h-5 w-16 bg-slate-100 rounded-md" />
+                <div className="h-4 w-24 bg-slate-100 rounded-md" />
+                <div className="h-4 flex-1 bg-slate-100 rounded-md" />
+                <div className="h-4 w-20 bg-slate-100 rounded-md" />
+                <div className="h-4 w-24 bg-slate-100 rounded-md" />
+              </div>
+            ))}
+          </div>
         ) : tickets?.length === 0 ? (
           <div className="p-12 text-center text-slate-400 text-xs bg-white rounded-2xl border border-slate-200/70">
             Tidak ada tiket yang cocok dengan filter saat ini.
